@@ -39,13 +39,15 @@ router.put('/me', authorize('student'), asyncHandler(async (req, res) => {
   res.json(student);
 }));
 
+// upload and update resume both are happend
+
 router.post(
     "/me/resume",
     authorize("student"),
     upload.single("resume"),
     asyncHandler(async (req, res) => {
 
-        // 1. Check uploaded file
+        // Check uploaded file
         if (!req.file) {
             return res.status(400).json({
                 success: false,
@@ -53,7 +55,7 @@ router.post(
             });
         }
 
-        // 2. Find logged-in student's profile
+        //  Find logged-in student's profile
         const student = await Student.findOne({
             user: req.user._id
         });
@@ -65,10 +67,10 @@ router.post(
             });
         }
 
-        // 3. Store OLD public ID before updating
+        //  Store OLD public ID before updating
         const oldPublicId = student.resume?.publicId;
 
-        // 4. Upload NEW resume to Cloudinary
+        //  Upload NEW resume to Cloudinary
         const cloudinaryResult = await uploadOnCloudinary(
             req.file.path,
             "raw"
@@ -84,7 +86,7 @@ router.post(
         console.log("NEW RESUME:", cloudinaryResult.public_id);
         console.log("OLD RESUME:", oldPublicId);
 
-        // 5. Update student document
+        //  Update student document
         student.resume = {
             url: cloudinaryResult.secure_url,
             publicId: cloudinaryResult.public_id
@@ -104,7 +106,7 @@ router.post(
             throw error;
         }
 
-        // 6. Delete OLD resume only after successful DB save
+        //  Delete OLD resume only after successful DB save
         if (
             oldPublicId &&
             oldPublicId !== cloudinaryResult.public_id
@@ -121,7 +123,7 @@ router.post(
             }
         }
 
-        // 7. Send response
+        //  Send response
         return res.status(200).json({
             success: true,
             message: "Resume uploaded successfully",
